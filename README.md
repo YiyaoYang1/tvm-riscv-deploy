@@ -79,9 +79,10 @@ This will create the `cpp_deploy_pack` executable.
 ## Step 5: Running on RISC-V Processor or Emulator
 If you do not have a RISC-V processor to execute, you can use the QEMU emulator. For more information, please read `Qemu_usage.md`.
 
-Transfer the `cpp_deploy_pack` executable and `lib/test_resnet18.so` to `ubuntu_riscv64` and execute to get the results.
-
-With these steps, you have successfully deployed ResNet18 using the TVM compiler on a RISC-V processor and performed an inference.
+Transfer the `cpp_deploy_pack` executable and `lib/test_resnet18.so` to riscv64 file system and execute to get the results.
+```bash
+./cpp_deploy_pack
 ```
 
-Please replace `/path/to/tvm` and `/path/to/llvm-config` with the actual paths in your environment. Also, ensure to check the `Qemu_usage.md` for details on using the QEMU emulator.
+With these steps, you have successfully deployed ResNet18 using the TVM compiler on a RISC-V processor and performed an inference.
+

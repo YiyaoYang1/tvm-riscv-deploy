@@ -1,55 +1,87 @@
 # tvm-riscv-deploy
-A demo about how to deploy TVM compiler on RISC-V with Resnet18.
+This repository demonstrates how to deploy the TVM compiler on a RISC-V architecture using ResNet18.
 
-step1:
-A lot of these steps are taken from the TVM Install from Source page.
+## Step 1: Setting up TVM
+Follow these steps, which are adapted from the [TVM Install from Source](http://tvm.apache.org/docs/install/from_source.html) page.
 
-Clone and checkout the specific branch in the following repo.
+### Clone the repository
+```bash
 git clone --recursive --branch int4_direct_HWNC http://github.com/zachzzc/incubator-tvm.git ~/tvm
-Install LLVM.
+```
 
+### Install LLVM
+```bash
 sudo bash -c "$(wget -O - http://apt.llvm.org/llvm.sh)"
-Install build dependencies.
+```
 
+### Install build dependencies
+```bash
 sudo apt-get update
 sudo apt-get install -y python3 python3-dev python3-setuptools gcc libtinfo-dev zlib1g-dev build-essential cmake libedit-dev libxml2-dev
-Change directory to the TVM directory, create a build directory and copy cmake/config.cmake to the directory.
+```
 
+### Build TVM
+Navigate to the TVM directory, create a build directory, and copy the `config.cmake` file.
+```bash
 cd ~/tvm
 mkdir build
 cp cmake/config.cmake build
-Edit build/config.cmake to customize compilation options:
+```
 
-Change set(USE_LLVM OFF) to set(USE_LLVM /path/to/llvm-config) to build with LLVM. The /path/to/llvm-config should be something like /usr/lib/llvm-10/bin/llvm-config.
+Edit `build/config.cmake` to customize compilation options:
+- Change `set(USE_LLVM OFF)` to `set(USE_LLVM /path/to/llvm-config)` to build with LLVM (replace `/path/to/llvm-config` with the actual path, such as `/usr/lib/llvm-10/bin/llvm-config`).
 
+Then compile TVM:
+```bash
 cd build
 cmake ..
 make -j4
-Install the TVM Python package by appending the following lines to ~/.bashrc:
+```
 
+### Install the TVM Python package
+Add the following lines to `~/.bashrc`:
+```bash
 export TVM_HOME=/path/to/tvm
 export PYTHONPATH=$TVM_HOME/python:$TVM_HOME/topi/python:$TVM_HOME/nnvm/python:${PYTHONPATH}
-and then source ~/.bashrc to apply the changes.
+```
+Source `~/.bashrc` to apply the changes:
+```bash
+source ~/.bashrc
+```
 
-Install Python dependencies.
+### Install Python dependencies
+Install the necessary dependencies:
+```bash
+pip3 install --user numpy decorator attrs
+```
 
-Necessary dependencies: pip3 install --user numpy decorator attrs
+## Step 2: Install RISC-V GNU Compiler Toolchain
+```bash
+sudo apt update
+sudo apt install gcc-riscv64-linux-gnu g++-riscv64-linux-gnu
+```
 
-step2:
-'''bash
+Compile the TVM runtime for RISC-V:
+```bash
 riscv64-linux-gnu-g++ -c -std=c++17 -O2 -fPIC -I/home/tvm/include -I/home/tvm/3rdparty/dmlc-core/include -I/home/tvm/3rdparty/dlpack/include -DDMLC_USE_LOGGING_LIBRARY=\<tvm/runtime/logging.h\> -o lib/libtvm_runtime_pack.o  tvm_runtime_pack.cc
-'''
-得到libtvm_runtime_pack.o文件，它就是TVM runtime for risc-v
+```
+This will generate the `libtvm_runtime_pack.o` file.
 
-step3:
-用prepare_test_libs.py生成test_resnet18.so文件
-step4:
-'''bash
+## Step 3: Generate `test_resnet18.so`
+Use `prepare_test_libs.py` to generate the `test_resnet18.so` file.
+
+## Step 4: Compile the Deployment Package
+```bash
 riscv64-linux-gnu-g++ -std=c++17 -O2 -fPIC -I/home/tvm/include -I/home/tvm/3rdparty/dmlc-core/include -I/home/tvm/3rdparty/dlpack/include -DDMLC_USE_LOGGING_LIBRARY=\<tvm/runtime/logging.h\> -o lib/cpp_deploy_pack cpp_deploy.cc lib/test_resnet18.so lib/libtvm_runtime_pack.o -L/home/tvm/build -ldl -pthread
-'''bash
-得到cpp_deploy_pack可执行文件
+```
+This will create the `cpp_deploy_pack` executable.
 
-step5:
-如果没有RISC-V处理器用于执行，可以使用qemu模拟器，相关信息请阅读Qemu_usage.md
-把cpp_deploy_pack可执行文件和lib/test_resnet18.so放到ubuntu_riscv64里，执行得到结果
-至此，我们完成了将ResNet18通过TVM编译器部署在RISC-V处理器上，执行一次inference
+## Step 5: Running on RISC-V Processor or Emulator
+If you do not have a RISC-V processor to execute, you can use the QEMU emulator. For more information, please read `Qemu_usage.md`.
+
+Transfer the `cpp_deploy_pack` executable and `lib/test_resnet18.so` to `ubuntu_riscv64` and execute to get the results.
+
+With these steps, you have successfully deployed ResNet18 using the TVM compiler on a RISC-V processor and performed an inference.
+```
+
+Please replace `/path/to/tvm` and `/path/to/llvm-config` with the actual paths in your environment. Also, ensure to check the `Qemu_usage.md` for details on using the QEMU emulator.
